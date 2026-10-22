@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ศูนย์กลางสรุปสูตร มโนทัศน์ และคลังโจทย์แคลคูลัสหลายตัวแปร</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MathJax for rendering LaTeX math formulas -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="mathjax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            height: 320px;
+            max-height: 380px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid #e2e8f0;
+        }
+        .math-box {
+            background-color: #f1f5f9;
+            border-left: 4px solid #4f46e5;
+        }
+        .solution-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Chosen Palette: Slate Indigo & Emerald Palette (Primary: Indigo-950, Accents: Emerald/Purple/Rose, Canvas background: Slate-50) -->
+    <!-- Application Structure Plan: 
+         1. Header & Dynamic Navigation Tabs: Switch between Overview Dashboard, Detailed Topic Deep Dives, Exam Problem Bank (18 Problems with step-by-step solutions), and Interactive Simulators.
+         2. Section 1: Functions of Several Variables, 3D Graphs, Limits & Two-Path Continuity Test.
+         3. Section 2: Partial Derivatives, Total Differential dz, Multivariable Chain Rule & Linearization L(x,y).
+         4. Section 3: Critical Points, Second Derivative Test (Hessian Discriminant D), Extrema & Saddle Points.
+         5. Section 4: Applied Optimization & Related Rates.
+         6. Interactive Topic Deep-Dive Selector View: Provides in-depth theoretical breakdown, mathematical rigor, and step-by-step proofs for each individual module.
+         7. University Exam Problem Bank: 18 classic problems covering all topics with full MathJax latex solutions and filterable tags.
+         Rationale: Structured by clear mathematical domain topics rather than specific week numbers, allowing students and instructors to navigate fluidly between overview formulas, dynamic charts, deep explanations, and practice exam problems.
+    -->
+    <!-- Visualization & Content Choices:
+         1. Level Curves Interactive Plotter: Chart.js Line canvas visualizer showing contour slices z=c.
+         2. Linearization Error Calculator: Chart.js Canvas comparing exact change Delta Z with total differential dz.
+         3. Hessian Cross-Section Visualizer: Interactive Chart.js comparing convex/concave slices along X & Y axes.
+         4. Conical Tank Related Rates Visualizer: Dynamic rate curve dh/dt against fluid height h.
+         5. Problem Bank: 18 complete problems formatted with LaTeX rendered via MathJax.
+         Libraries used: Chart.js (Canvas only), MathJax, Tailwind CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 bg-indigo-950 text-white shadow-lg border-b border-indigo-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo / Title -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchMainView('overview')">
+                    <div class="bg-indigo-600 text-white p-2 rounded-xl font-bold text-xl flex items-center justify-center w-10 h-10 shadow">
+                        $\nabla$
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">Multivariable Calculus Hub</h1>
+                        <p class="text-xs text-indigo-300">ฟังก์ชันหลายตัวแปรและการประยุกต์อนุพันธ์</p>
+                    </div>
+                </div>
+                
+                <!-- Main Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 lg:space-x-2 text-sm font-medium">
+                    <button id="nav-btn-overview" onclick="switchMainView('overview')" class="px-3 py-2 rounded-lg bg-indigo-800 text-white font-semibold transition">
+                        <i class="fas fa-home mr-1.5"></i> ภาพรวมสูตร
+                    </button>
+                    <button id="nav-btn-deepdive" onclick="switchMainView('deepdive')" class="px-3 py-2 rounded-lg hover:bg-indigo-800 text-indigo-200 hover:text-white transition">
+                        <i class="fas fa-book-reader mr-1.5"></i> เจาะลึกเนื้อหา
+                    </button>
+                    <button id="nav-btn-problems" onclick="switchMainView('problems')" class="px-3 py-2 rounded-lg hover:bg-indigo-800 text-indigo-200 hover:text-white transition">
+                        <i class="fas fa-tasks mr-1.5"></i> คลังโจทย์สอบ (18 ข้อ)
+                    </button>
+                    <button id="nav-btn-simulators" onclick="switchMainView('simulators')" class="px-3 py-2 rounded-lg hover:bg-indigo-800 text-indigo-200 hover:text-white transition">
+                        <i class="fas fa-chart-line mr-1.5"></i> เครื่องมือจำลอง
+                    </button>
+                </nav>
+
+                <!-- Search & Quick Action -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleSearchModal()" class="p-2 bg-indigo-800 hover:bg-indigo-700 rounded-lg text-indigo-200 hover:text-white transition" title="ค้นหาสูตร/โจทย์">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button onclick="switchMainView('problems')" class="hidden sm:inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition">
+                        <i class="fas fa-pen-nib mr-1.5"></i> ฝึกทำโจทย์สอบ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Bar -->
+        <div class="md:hidden flex justify-around bg-indigo-900 border-t border-indigo-800 text-xs py-2 px-1">
+            <button onclick="switchMainView('overview')" class="flex flex-col items-center text-indigo-200 hover:text-white">
+                <i class="fas fa-home text-base"></i> ภาพรวม
+            </button>
+            <button onclick="switchMainView('deepdive')" class="flex flex-col items-center text-indigo-200 hover:text-white">
+                <i class="fas fa-book-reader text-base"></i> เนื้อหา
+            </button>
+            <button onclick="switchMainView('problems')" class="flex flex-col items-center text-indigo-200 hover:text-white">
+                <i class="fas fa-tasks text-base"></i> คลังโจทย์
+            </button>
+            <button onclick="switchMainView('simulators')" class="flex flex-col items-center text-indigo-200 hover:text-white">
+                <i class="fas fa-chart-line text-base"></i> จำลอง
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
+
+        <!-- VIEW 1: OVERVIEW DASHBOARD -->
+        <div id="view-overview" class="space-y-10">
+            <!-- Hero / Course Syllabus Overview -->
+            <section class="bg-gradient-to-r from-indigo-950 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-3xl space-y-4">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                        <i class="fas fa-graduation-cap mr-1.5"></i> Outcome-Based Education Module
+                    </div>
+                    <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight">
+                        ศูนย์กลางสรุปสูตร มโนทัศน์ และคลังโจทย์แคลคูลัสขั้นสูง
+                    </h2>
+                    <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
+                        รวมเนื้อหาครอบคลุมทุกหมวดรายวิชา <strong>FUNCTIONS OF SEVERAL VARIABLES AND APPLICATIONS OF DERIVATIVES</strong> พร้อมระบบจำลองกราฟเชิงปฏิสัมพันธ์ และคลังโจทย์สอบมหาวิทยาลัยพร้อมเฉลยละเอียด 18 ข้อ
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-3">
+                        <button onclick="switchMainView('deepdive')" class="px-4 py-2 bg-white text-indigo-950 font-bold text-xs sm:text-sm rounded-lg hover:bg-indigo-50 shadow transition">
+                            <i class="fas fa-book-open mr-1"></i> เข้าสู่หน้าเจาะลึกเนื้อหา
+                        </button>
+                        <button onclick="switchMainView('problems')" class="px-4 py-2 bg-indigo-800 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm rounded-lg border border-indigo-600 transition">
+                            <i class="fas fa-file-alt mr-1"></i> ดูตะลุยโจทย์สอบ 18 ข้อ
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Topic Cards Grid -->
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 border-t border-indigo-800/80 pt-6">
+                    <div onclick="openTopicDeepDive('topic1')" class="bg-indigo-900/50 hover:bg-indigo-800/60 cursor-pointer p-4 rounded-xl border border-indigo-700/50 transition">
+                        <div class="text-xs text-indigo-300 font-bold uppercase">หมวดที่ 1</div>
+                        <div class="text-base font-bold text-white mt-1">ฟังก์ชันหลายตัวแปร กราฟ ลิมิต</div>
+                        <div class="text-xs text-indigo-200 mt-1">กราฟของสมการ, เส้นโค้งระดับ, ลิมิต & การทดสอบ Two-Path</div>
+                    </div>
+                    <div onclick="openTopicDeepDive('topic2')" class="bg-indigo-900/50 hover:bg-indigo-800/60 cursor-pointer p-4 rounded-xl border border-indigo-700/50 transition">
+                        <div class="text-xs text-indigo-300 font-bold uppercase">หมวดที่ 2</div>
+                        <div class="text-base font-bold text-white mt-1">อนุพันธ์ย่อย ผลต่างเชิงอนุพันธ์</div>
+                        <div class="text-xs text-indigo-200 mt-1">อนุพันธ์ย่อย, ผลต่างรวม $dz$, กฎลูกโซ่, การประมาณเชิงเส้น</div>
+                    </div>
+                    <div onclick="openTopicDeepDive('topic3')" class="bg-indigo-900/50 hover:bg-indigo-800/60 cursor-pointer p-4 rounded-xl border border-indigo-700/50 transition">
+                        <div class="text-xs text-indigo-300 font-bold uppercase">หมวดที่ 3</div>
+                        <div class="text-base font-bold text-white mt-1">จุดวิกฤต & จุดอานม้า</div>
+                        <div class="text-xs text-indigo-200 mt-1">อนุพันธ์อันดับสอง, Hessian Discriminant $D$, จุดสุดขีดสัมพัทธ์</div>
+                    </div>
+                    <div onclick="openTopicDeepDive('topic4')" class="bg-indigo-900/50 hover:bg-indigo-800/60 cursor-pointer p-4 rounded-xl border border-indigo-700/50 transition">
+                        <div class="text-xs text-indigo-300 font-bold uppercase">หมวดที่ 4</div>
+                        <div class="text-base font-bold text-white mt-1">การประยุกต์อนุพันธ์</div>
+                        <div class="text-xs text-indigo-200 mt-1">ประยุกต์สูงสุด-ต่ำสุด (Optimization) & อัตราสัมพัทธ์</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 1: Functions, Graphs, Limits & Continuity -->
+            <section class="space-y-6">
+                <div class="border-b border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200">หมวดวิชาที่ 1</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-1">ฟังก์ชันหลายตัวแปร กราฟของสมการ ลิมิต และความต่อเนื่อง</h2>
+                    </div>
+                    <button onclick="openTopicDeepDive('topic1')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center">
+                        เจาะลึกเนื้อหาหมวดนี้ <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    การศึกษาฟังก์ชันหลายตัวแปรเริ่มต้นจากการทำความเข้าใจโดเมนในระนาบ $\mathbb{R}^2$ และเรขาคณิตสามมิติ $\mathbb{R}^3$ การลดมิติพื้นผิวด้วย **เส้นโค้งระดับ (Level Curves)** $f(x,y)=c$ และการพิสูจน์การไม่มีอยู่ของลิมิตโดยใช้ **การทดสอบสองเส้นทาง (Two-Path Test)**
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Formulas & Definitions -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="glass-card p-5 rounded-xl shadow-sm">
+                            <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
+                                <i class="fas fa-shapes text-indigo-600 mr-2"></i> สรุปรูปแบบสมการพื้นผิวและเส้นโค้งระดับมาตรฐาน
+                            </h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left text-slate-600 border-collapse">
+                                    <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                                        <tr>
+                                            <th class="p-2.5">รูปแบบสมการ $z = f(x,y)$</th>
+                                            <th class="p-2.5">รูปทรงเรขาคณิต 3D</th>
+                                            <th class="p-2.5">เส้นโค้งระดับ $f(x,y)=c$</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200">
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="p-2.5 font-mono text-indigo-700">$z = ax + by + d$</td>
+                                            <td class="p-2.5">ระนาบราบ (Plane)</td>
+                                            <td class="p-2.5">เส้นตรงขนานกัน $ax+by=c-d$</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="p-2.5 font-mono text-indigo-700">$z = x^2 + y^2$</td>
+                                            <td class="p-2.5">พาราโบโลอยด์เชิงวงกลม</td>
+                                            <td class="p-2.5">วงกลมซ้อนศูนย์กลาง $x^2+y^2=c$</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="p-2.5 font-mono text-indigo-700">$z = \sqrt{r^2 - x^2 - y^2}$</td>
+                                            <td class="p-2.5">ครึ่งทรงกลมด้านบน</td>
+                                            <td class="p-2.5">วงกลมรัศมี $\sqrt{r^2-c^2}$</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="p-2.5 font-mono text-indigo-700">$z = x^2 - y^2$</td>
+                                            <td class="p-2.5">พาราโบโลอยด์อานม้า</td>
+                                            <td class="p-2.5">ไฮเพอร์โบลา $x^2-y^2=c$</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-5 rounded-xl shadow-sm space-y-2">
+                            <h3 class="font-bold text-slate-800 text-base flex items-center">
+                                <i class="fas fa-route text-amber-600 mr-2"></i> การทดสอบลิมิตสองเส้นทาง (Two-Path Test for Limits)
+                            </h3>
+                            <div class="math-box p-3 rounded-lg text-xs space-y-1">
+                                <p class="font-semibold text-indigo-950">หลักการสำคัญ:</p>
+                                <p>หากนำเส้นทาง $C_1$ เข้าสู่จุด $(x_0,y_0)$ ได้ลิมิต $L_1$ และนำเส้นทาง $C_2$ เข้าสู่จุด $(x_0,y_0)$ ได้ลิมิต $L_2$ โดยที่ $L_1 \neq L_2$ จะสรุปว่า **$\lim_{(x,y)\to(x_0,y_0)} f(x,y)$ ไม่มีค่า**</p>
+                                <p class="text-slate-500 text-[11px] mt-1">* เส้นทางยอดนิยมที่มหาลัยใช้ออกสอบ: $y = mx$, $y = kx^2$, $x = ky^2$</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mini Visualizer Card -->
+                    <div class="lg:col-span-5">
+                        <div class="glass-card p-5 rounded-xl shadow-sm flex flex-col justify-between h-full">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base mb-2">
+                                    <i class="fas fa-layer-group text-indigo-600 mr-2"></i> จำลองลักษณะเส้นโค้งระดับ
+                                </h3>
+                                <p class="text-xs text-slate-500 mb-3">เลือกรูปทรงเพื่อแสดงแนวตัดภาคตัดกรวยบนระนาบ $xy$</p>
+                                <div class="grid grid-cols-2 gap-2 mb-3">
+                                    <button onclick="updateOverviewLevelChart('paraboloid')" class="px-2.5 py-1.5 bg-indigo-600 text-white rounded text-xs font-semibold">พาราโบโลอยด์</button>
+                                    <button onclick="updateOverviewLevelChart('saddle')" class="px-2.5 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded text-xs font-semibold">อานม้า</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="overviewLevelChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: Partial Derivatives, Total Differential, Chain Rule, Linearization -->
+            <section class="space-y-6">
+                <div class="border-b border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">หมวดวิชาที่ 2</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-1">อนุพันธ์ย่อย ผลต่างเชิงอนุพันธ์ กฎลูกโซ่ และการประมาณเชิงเส้น</h2>
+                    </div>
+                    <button onclick="openTopicDeepDive('topic2')" class="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center">
+                        เจาะลึกเนื้อหาหมวดนี้ <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    การหาอัตราการเปลี่ยนแปลงเมื่อกำหนดให้ตัวแปรอื่นคงที่ (อนุพันธ์ย่อย) การคำนวณการเปลี่ยนแปลงสะสมด้วย **ผลต่างเชิงอนุพันธ์รวม (Total Differential)** $dz$, การขยายกฎลูกโซ่สู่หลายตัวแปรอิสระ และการสร้างระนาบสัมผัสเพื่อ **ประมาณค่าเชิงเส้น (Linearization)** $L(x,y)$
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-5 rounded-xl shadow-sm space-y-3">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center">
+                            <i class="fas fa-calculator text-emerald-600 mr-2"></i> สูตรคำนวณหลักหมวดอนุพันธ์ย่อย
+                        </h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="math-box p-2.5 rounded-lg">
+                                <span class="font-bold text-indigo-950">1. ผลต่างเชิงอนุพันธ์รวม (Total Differential):</span>
+                                <p>$$dz = df = f_x(x,y)dx + f_y(x,y)dy = \frac{\partial f}{\partial x}dx + \frac{\partial f}{\partial y}dy$$</p>
+                            </div>
+                            <div class="math-box p-2.5 rounded-lg">
+                                <span class="font-bold text-indigo-950">2. การประมาณเชิงเส้น (Linearization) ณ จุด $(x_0,y_0)$:</span>
+                                <p>$$L(x,y) = f(x_0,y_0) + f_x(x_0,y_0)(x-x_0) + f_y(x_0,y_0)(y-y_0)$$</p>
+                            </div>
+                            <div class="math-box p-2.5 rounded-lg">
+                                <span class="font-bold text-indigo-950">3. กฎลูกโซ่ (Multivariable Chain Rule):</span>
+                                <p>กรณี $w = f(x,y)$ โดย $x=x(t), y=y(t) \implies \frac{dw}{dt} = \frac{\partial w}{\partial x}\frac{dx}{dt} + \frac{\partial w}{\partial y}\frac{dy}{dt}$</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-xl shadow-sm space-y-3">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center">
+                            <i class="fas fa-sliders-h text-emerald-600 mr-2"></i> การคำนวณเปรียบเทียบค่าจริง $\Delta z$ กับค่าประมาณ $dz$
+                        </h3>
+                        <p class="text-xs text-slate-500">ทดสอบสำหรับ $z = x^2 + y^2$ ณ จุดเริ่มต้น $(2,3)$</p>
+                        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border text-xs">
+                            <div>
+                                <label class="block font-semibold mb-1">ระยะเปลี่ยน $dx = \Delta x$:</label>
+                                <input type="number" id="overviewDx" value="0.1" step="0.05" onchange="calcOverviewLinearization()" class="w-full p-1.5 border rounded font-mono">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">ระยะเปลี่ยน $dy = \Delta y$:</label>
+                                <input type="number" id="overviewDy" value="0.1" step="0.05" onchange="calcOverviewLinearization()" class="w-full p-1.5 border rounded font-mono">
+                            </div>
+                        </div>
+                        <div id="overviewLinearResult" class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs space-y-1">
+                            <div>ค่าเปลี่ยนแปลงจริง $\Delta z = 0.8200$</div>
+                            <div>ค่าประมาณผลต่างรวม $dz = 0.8000$</div>
+                            <div class="font-bold text-emerald-800">ความคลาดเคลื่อนสะสม = 2.44%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: Critical Points, Second Derivative Test, Extrema, Saddle Points -->
+            <section class="space-y-6">
+                <div class="border-b border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200">หมวดวิชาที่ 3</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-1">จุดวิกฤต อนุพันธ์อันดับสอง ค่าสุดขีดสัมพัทธ์ และจุดอานม้า</h2>
+                    </div>
+                    <button onclick="openTopicDeepDive('topic3')" class="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center">
+                        เจาะลึกเนื้อหาหมวดนี้ <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    กระบวนการหาจุดวิกฤต $(a,b)$ จากระบบสมการ $f_x=0$ และ $f_y=0$ แล้วจำแนกจุดด้วย **ดิสคริมิแนนต์ของเฮสเซียน (Hessian Discriminant $D$)** เพื่อระบุจุดสูงสุดสัมพัทธ์ จุดต่ำสุดสัมพัทธ์ หรือ **จุดอานม้า (Saddle Point)**
+                </p>
+
+                <div class="glass-card p-5 rounded-xl shadow-sm space-y-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center">
+                        <i class="fas fa-balance-scale text-purple-600 mr-2"></i> เกณฑ์การทดสอบด้วยอนุพันธ์อันดับสอง (Second Derivative Test)
+                    </h3>
+                    <div class="math-box p-3 rounded-lg text-xs">
+                        <strong>สูตรคำนวณค่าดิสคริมิแนนต์ $D$:</strong>
+                        $$D = H(a,b) = f_{xx}(a,b) \cdot f_{yy}(a,b) - [f_{xy}(a,b)]^2$$
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <div class="font-bold text-emerald-800 text-sm">1. จุดต่ำสุดสัมพัทธ์</div>
+                            <div class="font-mono text-emerald-700 mt-1">$D > 0$ และ $f_{xx} > 0$</div>
+                            <p class="text-slate-500 mt-1">พื้นผิวโค้งหงายขึ้นทุกทิศทาง</p>
+                        </div>
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="font-bold text-blue-800 text-sm">2. จุดสูงสุดสัมพัทธ์</div>
+                            <div class="font-mono text-blue-700 mt-1">$D > 0$ และ $f_{xx} < 0$</div>
+                            <p class="text-slate-500 mt-1">พื้นผิวโค้งคว่ำลงทุกทิศทาง</p>
+                        </div>
+                        <div class="p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                            <div class="font-bold text-rose-800 text-sm">3. จุดอานม้า (Saddle)</div>
+                            <div class="font-mono text-rose-700 mt-1">$D < 0$</div>
+                            <p class="text-slate-500 mt-1">ทิศทางหนึ่งโค้งขึ้น อีกทิศทางโค้งลง</p>
+                        </div>
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div class="font-bold text-amber-800 text-sm">4. สรุปผลไม่ได้</div>
+                            <div class="font-mono text-amber-700 mt-1">$D = 0$</div>
+                            <p class="text-slate-500 mt-1">ต้องใช้วิธีอื่นวิเคราะห์เพิ่มเติม</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: Applied Optimization & Related Rates -->
+            <section class="space-y-6">
+                <div class="border-b border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">หมวดวิชาที่ 4</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-1">การประยุกต์อนุพันธ์: ปัญหาสูงสุด-ต่ำสุด และอัตราสัมพัทธ์</h2>
+                    </div>
+                    <button onclick="openTopicDeepDive('topic4')" class="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center">
+                        เจาะลึกเนื้อหาหมวดนี้ <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    การนำอนุพันธ์ไปแก้ปัญหาคำนวณทางวิศวกรรม ได้แก่ การหาขนาดบรรจุภัณฑ์ที่ประหยัดวัสดุที่สุด (Applied Optimization) และการวิเคราะห์การเปลี่ยนแปลงปริมาตร/ระดับน้ำเทียบกับเวลา (Related Rates)
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-5 rounded-xl shadow-sm space-y-3">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center">
+                            <i class="fas fa-box text-rose-600 mr-2"></i> ปัญหาสูงสุด-ต่ำสุดเชิงประยุกต์ (Applied Optimization)
+                        </h3>
+                        <p class="text-xs text-slate-600">ขั้นตอนการแก้ปัญหา:</p>
+                        <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1 bg-slate-50 p-3 rounded-lg border">
+                            <li>สร้างสมการเป้าหมาย $f(x,y)$ เช่น ปริมาตร $V$ หรือ ต้นทุน $C$</li>
+                            <li>ใช้สมการข้อจำกัด (Constraint) เพื่อยุบตัวแปรเหลือ 1 หรือ 2 ตัวแปร</li>
+                            <li>หาอนุพันธ์เท่ากับศูนย์เพื่อระบุจุดวิกฤต</li>
+                            <li>ตรวจสอบขอบเขตและเงื่อนไขทางกายภาพเพื่อสรุปคำตอบสัมบูรณ์</li>
+                        </ol>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-xl shadow-sm space-y-3">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center">
+                            <i class="fas fa-stopwatch text-rose-600 mr-2"></i> อัตราสัมพัทธ์ (Related Rates)
+                        </h3>
+                        <p class="text-xs text-slate-600">ตัวอย่างคลาสสิก: อัตราการลดลงของระดับน้ำในถังทรงกรวย</p>
+                        <div class="math-box p-3 rounded-lg text-xs space-y-1">
+                            <p>ความสัมพันธ์ปริมาตรกรวย $V = \frac{1}{3}\pi r^2 h$ โดยที่ $r = k \cdot h$</p>
+                            <p>จะได้ $V = \frac{1}{3}\pi k^2 h^3$</p>
+                            <p class="font-bold text-rose-900 mt-1">หาอนุพันธ์เทียบเวลา $t$: $\frac{dV}{dt} = \pi k^2 h^2 \frac{dh}{dt}$</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW 2: TOPIC DEEP-DIVE VIEWS (Sub-pages Switcher) -->
+        <div id="view-deepdive" class="hidden space-y-8">
+            <!-- Topic Selection Sub-Header -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">เจาะลึกเนื้อหารายหมวดวิชา (Topic Deep Dives)</h2>
+                    <p class="text-xs text-slate-500">เลือกหมวดวิชาด้านล่างเพื่อเข้าสู่คำอธิบายเชิงลึก ตัวอย่างพิสูจน์ และรายละเอียดทางเรขาคณิต</p>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <button onclick="openTopicDeepDive('topic1')" id="sub-btn-topic1" class="px-3 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow-sm">หมวดที่ 1: กราฟ&ลิมิต</button>
+                    <button onclick="openTopicDeepDive('topic2')" id="sub-btn-topic2" class="px-3 py-2 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">หมวดที่ 2: อนุพันธ์ย่อย</button>
+                    <button onclick="openTopicDeepDive('topic3')" id="sub-btn-topic3" class="px-3 py-2 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">หมวดที่ 3: จุดวิกฤต</button>
+                    <button onclick="openTopicDeepDive('topic4')" id="sub-btn-topic4" class="px-3 py-2 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">หมวดที่ 4: การประยุกต์</button>
+                </div>
+            </div>
+
+            <!-- DEEP DIVE CONTENT 1 -->
+            <div id="dd-topic1" class="space-y-6">
+                <div class="bg-indigo-950 text-white p-6 rounded-2xl shadow-md">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Detailed Module 1</span>
+                    <h3 class="text-2xl font-bold mt-1">ฟังก์ชันหลายตัวแปร กราฟของสมการ ลิมิต และความต่อเนื่อง</h3>
+                    <p class="text-xs sm:text-sm text-indigo-200 mt-2">
+                        การวิเคราะห์โดเมนใน 2D, การเขียนกราฟพื้นผิว 3D, นิยามความสูงเส้นโค้งระดับ และระเบียบวิธีทดสอบลิมิต
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-card p-5 rounded-xl space-y-3">
+                        <h4 class="font-bold text-slate-800 text-base">1. การหาโดเมนของฟังก์ชัน $f(x,y)$</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            โดเมนคือเซตของคู่ลำดับ $(x,y)$ ทั้งหมดที่ทำให้ $f(x,y)$ หาค่าได้เป็นจำนวนจริง ข้อระวังในการหาโดเมนสอบ:
+                        </p>
+                        <ul class="list-disc list-inside text-xs text-slate-600 space-y-1 bg-slate-50 p-3 rounded-lg">
+                            <li>ตัวหารต้องไม่เป็นศูนย์: $\frac{P(x,y)}{Q(x,y)} \implies Q(x,y) \neq 0$</li>
+                            <li>ใต้รากที่สองต้องไม่ติดลบ: $\sqrt{g(x,y)} \implies g(x,y) \geq 0$</li>
+                            <li>หลังลอการิทึมต้องเป็นบวก: $\ln(h(x,y)) \implies h(x,y) > 0$</li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-xl space-y-3">
+                        <h4 class="font-bold text-slate-800 text-base">2. นิยามความต่อเนื่อง (Continuity)</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            ฟังก์ชัน $f(x,y)$ มีความต่อเนื่อง ณ จุด $(x_0,y_0)$ ก็ต่อเมื่อสอดคล้องกับเงื่อนไข 3 ข้อต่อไปนี้ครบถ้วน:
+                        </p>
+                        <div class="math-box p-3 rounded-lg text-xs space-y-1">
+                            <p>1. $f(x_0,y_0)$ หาค่าได้</p>
+                            <p>2. $\lim_{(x,y)\to(x_0,y_0)} f(x,y)$ หาค่าได้</p>
+                            <p>3. $\lim_{(x,y)\to(x_0,y_0)} f(x,y) = f(x_0,y_0)$</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEEP DIVE CONTENT 2 -->
+            <div id="dd-topic2" class="hidden space-y-6">
+                <div class="bg-emerald-950 text-white p-6 rounded-2xl shadow-md">
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Detailed Module 2</span>
+                    <h3 class="text-2xl font-bold mt-1">อนุพันธ์ย่อย ผลต่างเชิงอนุพันธ์ กฎลูกโซ่ และการประมาณเชิงเส้น</h3>
+                    <p class="text-xs sm:text-sm text-emerald-200 mt-2">
+                        การคำนวณอนุพันธ์ย่อยอันดับสูง ทฤษฎีบทของแคลโรต์ ผลต่างรวม $dz$ และการประยุกต์ประมาณค่า
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-card p-5 rounded-xl space-y-3">
+                        <h4 class="font-bold text-slate-800 text-base">1. ทฤษฎีบทของแคลโรต์ (Clairaut's Theorem)</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            หากฟังก์ชัน $f(x,y)$ และอนุพันธ์ย่อย $f_{xy}, f_{yx}$ มีความต่อเนื่องบนอาณาบริเวณเปิด จะได้ว่าอนุพันธ์ย่อยผสมอันดับสองมีค่าเท่ากันเสมอ:
+                        </p>
+                        <div class="math-box p-3 rounded-lg text-xs text-center font-bold text-indigo-900">
+                            $$f_{xy} = \frac{\partial^2 f}{\partial y \partial x} = \frac{\partial^2 f}{\partial x \partial y} = f_{yx}$$
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-xl space-y-3">
+                        <h4 class="font-bold text-slate-800 text-base">2. อนุพันธ์โดยปริยาย (Implicit Differentiation)</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            สำหรับสมการ $F(x,y,z) = 0$ เราสามารถหาอนุพันธ์ย่อยของ $z$ เทียบกับ $x$ และ $y$ ได้โดยไม่ต้องจัดรูป $z$ ในเทอมของ $x,y$:
+                        </p>
+                        <div class="math-box p-3 rounded-lg text-xs space-y-1">
+                            <p>$$\frac{\partial z}{\partial x} = -\frac{F_x}{F_z}, \quad \frac{\partial z}{\partial y} = -\frac{F_y}{F_z} \quad (F_z \neq 0)$$</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEEP DIVE CONTENT 3 -->
+            <div id="dd-topic3" class="hidden space-y-6">
+                <div class="bg-purple-950 text-white p-6 rounded-2xl shadow-md">
+                    <span class="text-xs font-bold uppercase tracking-wider text-purple-300">Detailed Module 3</span>
+                    <h3 class="text-2xl font-bold mt-1">จุดวิกฤต อนุพันธ์อันดับสอง ค่าสุดขีดสัมพัทธ์ และจุดอานม้า</h3>
+                    <p class="text-xs sm:text-sm text-purple-200 mt-2">
+                        การวิเคราะห์ความโค้งของพื้นผิวด้วยเมทริกซ์เฮสเซียน และทฤษฎีบทค่าสุดขีดบนโดเมนปิดจำกัด
+                    </p>
+                </div>
+
+                <div class="glass-card p-5 rounded-xl space-y-3">
+                    <h4 class="font-bold text-slate-800 text-base">ขั้นตอนการหาค่าสูงสุดและต่ำสุดสัมบูรณ์บนเขตปิดจำกัด (Closed Bounded Region)</h4>
+                    <ol class="list-decimal list-inside text-xs text-slate-600 space-y-2 bg-slate-50 p-4 rounded-lg border">
+                        <li>หาจุดวิกฤตทั้งหมดภายในอาณาบริเวณเปิด $R$ โดยแก้ระบบสมการ $f_x=0$ และ $f_y=0$</li>
+                        <li>หาค่าสุดขีดบนเส้นขอบ (Boundary of $R$) โดยแทนค่าสมการเส้นขอบลงใน $f(x,y)$ เพื่อลดรูปเหลือ 1 ตัวแปร</li>
+                        <li>เปรียบเทียบค่า $f(x,y)$ ทุกจุดวิกฤตภายในและจุดบนเส้นขอบ ค่าที่มากที่สุดคือ **ค่าสูงสุดสัมบูรณ์ (Absolute Max)** และค่าที่น้อยที่สุดคือ **ค่าต่ำสุดสัมบูรณ์ (Absolute Min)**</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- DEEP DIVE CONTENT 4 -->
+            <div id="dd-topic4" class="hidden space-y-6">
+                <div class="bg-rose-950 text-white p-6 rounded-2xl shadow-md">
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-300">Detailed Module 4</span>
+                    <h3 class="text-2xl font-bold mt-1">การประยุกต์อนุพันธ์: ปัญหาสูงสุด-ต่ำสุด และอัตราสัมพัทธ์</h3>
+                    <p class="text-xs sm:text-sm text-rose-200 mt-2">
+                        แบบจำลองทางกายภาพและวิศวกรรม การเพิ่มประสิทธิภาพทรัพยากร และอัตราการเปลี่ยนแปลงเทียบกับเวลา
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-card p-5 rounded-xl space-y-3">
+                        <h4 class="font-bold text-slate-800 text-base">1. การออกแบบกล่องที่มีปริมาตรสูงสุด</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            กำหนดให้ใช้แผ่นวัสดุพื้นที่ $A_0$ ทำกล่องเปิดฝาบนปริมาตร $V = xyz$ โดย $A_0 = xy + 2xz + 2yz$ จะได้สัดส่วนที่ประหยัดที่สุดคือฐานสี่เหลี่ยมจัตุรัส $x = y = 2z$
+                        </p>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-xl space-y-3">
+                        <h4 class="font-bold text-slate-800 text-base">2. การเปลี่ยนแปลงระยะทางระหว่างวัตถุ</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            วัตถุสองชิ้นเคลื่อนที่ด้วยความเร็ว $\frac{dx}{dt}$ และ $\frac{dy}{dt}$ ตามแกนตั้งฉาก ระยะห่าง $s^2 = x^2 + y^2$ หาอนุพันธ์เทียบเวลาได้ $s\frac{ds}{dt} = x\frac{dx}{dt} + y\frac{dy}{dt}$
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: UNIVERSITY EXAM PROBLEM BANK (18 PROBLEMS WITH FULL SOLUTIONS) -->
+        <div id="view-problems" class="hidden space-y-8">
+            <!-- Header & Filter Controls -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                        <i class="fas fa-tasks text-indigo-600 mr-2.5"></i> คลังโจทย์ข้อสอบมหาวิทยาลัยพร้อมเฉลยละเอียด (18 ข้อ)
+                    </h2>
+                    <p class="text-xs text-slate-500">รวบรวมโจทย์สอบยอดนิยมที่สถาบันอุดมศึกษาชอบใช้ออกสอบ ครบถ้วนทุกหัวข้อ</p>
+                </div>
+
+                <!-- Topic Filters for Problems -->
+                <div class="flex flex-wrap gap-1.5 text-xs">
+                    <button onclick="filterProblems('all')" class="prob-btn px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-sm">ทั้งหมด (18)</button>
+                    <button onclick="filterProblems('t1')" class="prob-btn px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">หมวดที่ 1</button>
+                    <button onclick="filterProblems('t2')" class="prob-btn px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">หมวดที่ 2</button>
+                    <button onclick="filterProblems('t3')" class="prob-btn px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">หมวดที่ 3</button>
+                    <button onclick="filterProblems('t4')" class="prob-btn px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">หมวดที่ 4</button>
+                </div>
+            </div>
+
+            <!-- Problems List Container -->
+            <div id="problemsList" class="space-y-6">
+
+                <!-- PROBLEM 1 -->
+                <div class="prob-card t1 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-md">ข้อที่ 1 | หมวดที่ 1: โดเมนฟังก์ชัน</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Midterm Basic</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงหาโดเมนของฟังก์ชัน $f(x,y) = \ln(y - x^2) + \frac{1}{\sqrt{4 - x^2 - y^2}}$ พร้อมวาดภาพระบายสีเขตโดเมนบนระนาบ $xy$
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. พิจารณาเทอม $\ln(y - x^2)$: เงื่อนไขหลัง $\ln$ ต้องเป็นบวกเสมอ $\implies y - x^2 > 0 \implies y > x^2$ (พื้นที่เหนือพาราโบลา $y = x^2$ โดยไม่รวมเส้นขอบ)</p>
+                        <p>2. พิจารณาเทอม $\frac{1}{\sqrt{4 - x^2 - y^2}}$: เงื่อนไขใต้รากส่วนต้องมากกว่าศูนย์ $\implies 4 - x^2 - y^2 > 0 \implies x^2 + y^2 < 4$ (พื้นที่ภายในวงกลมรัศมี 2 โดยไม่รวมเส้นขอบ)</p>
+                        <p>3. **คำตอบสรุป:** โดเมนคือ $D_f = \{ (x,y) \in \mathbb{R}^2 \mid y > x^2 \text{ และ } x^2 + y^2 < 4 \}$ ซึ่งคืออาณาบริเวณที่อยู่เหนือพาราโบลา $y=x^2$ แต่อยู่ภายในวงกลม $x^2+y^2=4$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 2 -->
+                <div class="prob-card t1 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-md">ข้อที่ 2 | หมวดที่ 1: ลิมิต Two-Path Test</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Classic Proof</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงแสดงว่า $\lim_{(x,y) \to (0,0)} \frac{x^2 y}{x^4 + y^2}$ ไม่มีค่า โดยใช้การทดสอบสองเส้นทาง
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. **เส้นทางที่ 1 ($C_1$):** ให้เข้าสู่จุด $(0,0)$ ตามเส้นตรง $y = mx$</p>
+                        <p class="ml-4 font-mono">$$\lim_{x \to 0} \frac{x^2(mx)}{x^4 + (mx)^2} = \lim_{x \to 0} \frac{m x^3}{x^4 + m^2 x^2} = \lim_{x \to 0} \frac{m x}{x^2 + m^2} = \frac{0}{0 + m^2} = 0 \quad (m \neq 0)$$</p>
+                        <p>2. **เส้นทางที่ 2 ($C_2$):** ให้เข้าสู่จุด $(0,0)$ ตามเส้นพาราโบลา $y = k x^2$</p>
+                        <p class="ml-4 font-mono">$$\lim_{x \to 0} \frac{x^2(k x^2)}{x^4 + (k x^2)^2} = \lim_{x \to 0} \frac{k x^4}{x^4 + k^2 x^4} = \lim_{x \to 0} \frac{k x^4}{x^4(1 + k^2)} = \frac{k}{1 + k^2}$$</p>
+                        <p>3. หากเลือก $k = 1$ จะได้ลิมิตเท่ากับ $\frac{1}{1 + 1} = \frac{1}{2}$</p>
+                        <p>4. **คำตอบสรุป:** เนื่องจากลิมิตตามเส้นทาง $C_1$ ได้ $0$ แต่ลิมิตตามเส้นทาง $C_2$ ได้ $\frac{1}{2}$ ($0 \neq \frac{1}{2}$) ดังนั้น $\lim_{(x,y) \to (0,0)} \frac{x^2 y}{x^4 + y^2}$ **ไม่มีค่า**</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 3 -->
+                <div class="prob-card t1 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-md">ข้อที่ 3 | หมวดที่ 1: เส้นโค้งระดับ</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Level Curves</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงหาสมการและอธิบายลักษณะเรขาคณิตของเส้นโค้งระดับ $f(x,y) = k$ สำหรับฟังก์ชัน $f(x,y) = \sqrt{16 - 4x^2 - y^2}$ ณ ค่าระดับ $k = 0, 2, 4$
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>ให้ $\sqrt{16 - 4x^2 - y^2} = k \implies 16 - 4x^2 - y^2 = k^2 \implies 4x^2 + y^2 = 16 - k^2$</p>
+                        <p>1. **กรณี $k = 0$:** $4x^2 + y^2 = 16 \implies \frac{x^2}{4} + \frac{y^2}{16} = 1$ (รูปวงรี รัศมีตามแกน y เป็น 4 และแกน x เป็น 2)</p>
+                        <p>2. **กรณี $k = 2$:** $4x^2 + y^2 = 16 - 4 = 12 \implies \frac{x^2}{3} + \frac{y^2}{12} = 1$ (รูปวงรีขนาดเล็กลง)</p>
+                        <p>3. **กรณี $k = 4$:** $4x^2 + y^2 = 16 - 16 = 0 \implies (x,y) = (0,0)$ (จุดกำเนิดจุดเดียว ยอดโดม)</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 4 -->
+                <div class="prob-card t1 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-md">ข้อที่ 4 | หมวดที่ 1: ความต่อเนื่อง</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Continuity Check</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        กำหนด $f(x,y) = \begin{cases} \frac{3x^2 y}{x^2 + y^2} & (x,y) \neq (0,0) \\ 0 & (x,y) = (0,0) \end{cases}$ จงตรวจสอบว่า $f$ ต่อเนื่อง ณ จุด $(0,0)$ หรือไม่
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. $f(0,0) = 0$ ตามเงื่อนไขโจทย์กำหนด</p>
+                        <p>2. เปลี่ยนเป็นพิกัดเชิงขั้ว (Polar Coordinates) $x = r\cos\theta, y = r\sin\theta$ เพื่อหาค่าลิมิต:</p>
+                        <p class="ml-4 font-mono">$$\lim_{(x,y)\to(0,0)} \frac{3x^2 y}{x^2 + y^2} = \lim_{r \to 0} \frac{3(r\cos\theta)^2(r\sin\theta)}{r^2} = \lim_{r \to 0} 3r \cos^2\theta \sin\theta = 0$$</p>
+                        <p>3. เนื่องจาก $\lim_{(x,y)\to(0,0)} f(x,y) = 0 = f(0,0)$ ดังนั้น **$f(x,y)$ มีความต่อเนื่อง ณ จุด $(0,0)$**</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 5 -->
+                <div class="prob-card t2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">ข้อที่ 5 | หมวดที่ 2: อนุพันธ์ย่อยอันดับสอง</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Partials</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        กำหนด $f(x,y) = x^3 y^2 + e^{x y^2}$ จงหาอนุพันธ์ย่อยผสม $f_{xy}$ และ $f_{yx}$ พร้อมยืนยันผลตามทฤษฎีบทแคลโรต์
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. หา $f_x = \frac{\partial f}{\partial x} = 3x^2 y^2 + y^2 e^{x y^2}$</p>
+                        <p>2. หา $f_{xy} = \frac{\partial}{\partial y}(f_x) = 6x^2 y + \left(2y e^{x y^2} + y^2 \cdot 2xy e^{x y^2}\right) = 6x^2 y + 2y e^{x y^2} (1 + xy^2)$</p>
+                        <p>3. หา $f_y = \frac{\partial f}{\partial y} = 2x^3 y + 2xy e^{x y^2}$</p>
+                        <p>4. หา $f_{yx} = \frac{\partial}{\partial x}(f_y) = 6x^2 y + \left(2y e^{x y^2} + 2xy \cdot y^2 e^{x y^2}\right) = 6x^2 y + 2y e^{x y^2} (1 + xy^2)$</p>
+                        <p>5. **คำตอบสรุป:** $f_{xy} = f_{yx} = 6x^2 y + 2y e^{x y^2} (1 + xy^2)$ ตรงตามทฤษฎีบทแคลโรต์ทุกประการ</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 6 -->
+                <div class="prob-card t2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">ข้อที่ 6 | หมวดที่ 2: ผลต่างเชิงอนุพันธ์รวม dz</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Total Differential</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        กล่องทรงสี่เหลี่ยมมุมฉากมีขนาดความกว้าง $x=3$ ซม. ยาว $y=4$ ซม. สูง $z=12$ ซม. หากการวัดมีความคลาดเคลื่อนไม่เกิน $0.05$ ซม. ในทุกมิติ จงใช้ผลต่างรวม $dV$ ประมาณค่าคลาดเคลื่อนสูงสุดในการคำนวณปริมาตร
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. สมการปริมาตร $V(x,y,z) = x y z$</p>
+                        <p>2. ผลต่างรวม $dV = \frac{\partial V}{\partial x} dx + \frac{\partial V}{\partial y} dy + \frac{\partial V}{\partial z} dz = (yz)dx + (xz)dy + (xy)dz$</p>
+                        <p>3. แทนค่า $x=3, y=4, z=12$ และ $|dx|=|dy|=|dz|=0.05$:</p>
+                        <p class="ml-4 font-mono">$$dV = (4 \times 12)(0.05) + (3 \times 12)(0.05) + (3 \times 4)(0.05) = (48 + 36 + 12)(0.05) = 96 \times 0.05 = 4.8 \text{ ลบ.ซม.}$$</p>
+                        <p>4. **คำตอบสรุป:** ค่าคลาดเคลื่อนสูงสุดในการคำนวณปริมาตรประมาณ **$\pm 4.8$ ลบ.ซม.**</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 7 -->
+                <div class="prob-card t2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">ข้อที่ 7 | หมวดที่ 2: การประมาณเชิงเส้น L(x,y)</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Linearization</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงหาสมการระนาบสัมผัสและการประมาณเชิงเส้น $L(x,y)$ ของฟังก์ชัน $f(x,y) = \sqrt{20 - x^2 - 7y^2}$ ณ จุด $(2,1)$ และใช้ประมาณค่า $f(1.95, 1.08)$
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. หาค่าฟังก์ชัน $f(2,1) = \sqrt{20 - 4 - 7} = \sqrt{9} = 3$</p>
+                        <p>2. หา $f_x(x,y) = \frac{-x}{\sqrt{20-x^2-7y^2}} \implies f_x(2,1) = -\frac{2}{3}$</p>
+                        <p>3. หา $f_y(x,y) = \frac{-7y}{\sqrt{20-x^2-7y^2}} \implies f_y(2,1) = -\frac{7}{3}$</p>
+                        <p>4. สมการการประมาณเชิงเส้น $L(x,y) = 3 - \frac{2}{3}(x-2) - \frac{7}{3}(y-1)$</p>
+                        <p>5. แทนค่า $(1.95, 1.08)$:</p>
+                        <p class="ml-4 font-mono">$$L(1.95, 1.08) = 3 - \frac{2}{3}(1.95-2) - \frac{7}{3}(1.08-1) = 3 - \frac{2}{3}(-0.05) - \frac{7}{3}(0.08) = 3 + 0.0333 - 0.1867 = 2.8466$$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 8 -->
+                <div class="prob-card t2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">ข้อที่ 8 | หมวดที่ 2: กฎลูกโซ่หลายตัวแปร</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Chain Rule</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        กำหนด $w = x^2 y + y z^2$ โดย $x = u v$, $y = u + v$, $z = u - v$ จงหาค่า $\frac{\partial w}{\partial u}$ ณ จุด $(u,v) = (2,1)$
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. คำนวณค่าตัวแปร ณ $(u,v) = (2,1) \implies x = 2, y = 3, z = 1$</p>
+                        <p>2. สูตรกฎลูกโซ่: $\frac{\partial w}{\partial u} = \frac{\partial w}{\partial x}\frac{\partial x}{\partial u} + \frac{\partial w}{\partial y}\frac{\partial y}{\partial u} + \frac{\partial w}{\partial z}\frac{\partial z}{\partial u}$</p>
+                        <p>3. หาอนุพันธ์ย่อยย่อย:</p>
+                        <p class="ml-4 font-mono">• $\frac{\partial w}{\partial x} = 2xy = 2(2)(3) = 12, \quad \frac{\partial x}{\partial u} = v = 1$</p>
+                        <p class="ml-4 font-mono">• $\frac{\partial w}{\partial y} = x^2 + z^2 = 4 + 1 = 5, \quad \frac{\partial y}{\partial u} = 1$</p>
+                        <p class="ml-4 font-mono">• $\frac{\partial w}{\partial z} = 2yz = 2(3)(1) = 6, \quad \frac{\partial z}{\partial u} = 1$</p>
+                        <p>4. แทนค่าสรุป: $\frac{\partial w}{\partial u} = (12)(1) + (5)(1) + (6)(1) = 12 + 5 + 6 = 23$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 9 -->
+                <div class="prob-card t2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">ข้อที่ 9 | หมวดที่ 2: อนุพันธ์โดยปริยาย 3D</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Implicit 3D</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        กำหนดสมการ $x^3 + y^3 + z^3 + 6xyz = 1" จงหา $\frac{\partial z}{\partial x}$ ณ จุด $(1, -1, 1)$
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. กำหนด $F(x,y,z) = x^3 + y^3 + z^3 + 6xyz - 1 = 0$</p>
+                        <p>2. หา $F_x = \frac{\partial F}{\partial x} = 3x^2 + 6yz \implies F_x(1,-1,1) = 3(1)^2 + 6(-1)(1) = 3 - 6 = -3$</p>
+                        <p>3. หา $F_z = \frac{\partial F}{\partial z} = 3z^2 + 6xy \implies F_z(1,-1,1) = 3(1)^2 + 6(1)(-1) = 3 - 6 = -3$</p>
+                        <p>4. จากสูตร $\frac{\partial z}{\partial x} = -\frac{F_x}{F_z} = -\frac{-3}{-3} = -1$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 10 -->
+                <div class="prob-card t3 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-md">ข้อที่ 10 | หมวดที่ 3: การหาจุดวิกฤต</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Critical Points</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงหาจุดวิกฤตทั้งหมดของฟังก์ชัน $f(x,y) = x^3 + y^3 - 3x - 12y + 20$
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. ตั้งระบบสมการหาจุดวิกฤต $f_x = 0$ และ $f_y = 0$:</p>
+                        <p class="ml-4 font-mono">• $f_x = 3x^2 - 3 = 0 \implies 3(x^2 - 1) = 0 \implies x = 1, -1$</p>
+                        <p class="ml-4 font-mono">• $f_y = 3y^2 - 12 = 0 \implies 3(y^2 - 4) = 0 \implies y = 2, -2$</p>
+                        <p>2. จับคู่ค่า $x$ และ $y$ จะได้จุดวิกฤตทั้งหมด 4 จุด ได้แก่:</p>
+                        <p class="ml-4 font-bold text-indigo-900">$(1, 2), \quad (1, -2), \quad (-1, 2), \quad (-1, -2)$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 11 -->
+                <div class="prob-card t3 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-md">ข้อที่ 11 | หมวดที่ 3: การจำแนกจุดด้วย Hessian D</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Hessian Test</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        ต่อเนื่องจากข้อ 10 จงใช้การทดสอบ Hessian Discriminant $D$ จำแนกประเภทจุดวิกฤตทั้ง 4 จุด
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. หาอนุพันธ์อันดับสอง: $f_{xx} = 6x, \quad f_{yy} = 6y, \quad f_{xy} = 0$</p>
+                        <p>2. สูตรดิสคริมิแนนต์ $D = f_{xx} f_{yy} - (f_{xy})^2 = (6x)(6y) - 0 = 36xy$</p>
+                        <p>3. ทดสอบแต่ละจุด:</p>
+                        <p class="ml-4">• **จุด $(1, 2)$:** $D = 36(1)(2) = 72 > 0$ และ $f_{xx} = 6 > 0 \implies$ **จุดต่ำสุดสัมพัทธ์**</p>
+                        <p class="ml-4">• **จุด $(-1, -2)$:** $D = 36(-1)(-2) = 72 > 0$ และ $f_{xx} = -6 < 0 \implies$ **จุดสูงสุดสัมพัทธ์**</p>
+                        <p class="ml-4">• **จุด $(1, -2)$:** $D = 36(1)(-2) = -72 < 0 \implies$ **จุดอานม้า (Saddle Point)**</p>
+                        <p class="ml-4">• **จุด $(-1, 2)$:** $D = 36(-1)(2) = -72 < 0 \implies$ **จุดอานม้า (Saddle Point)**</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 12 -->
+                <div class="prob-card t3 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-md">ข้อที่ 12 | หมวดที่ 3: จุดอานม้าบนพื้นผิวอานม้า</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Saddle Analysis</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงพิสูจน์ว่าจุดกำเนิด $(0,0)$ ของฟังก์ชัน $f(x,y) = x^2 - y^2$ เป็นจุดอานม้า
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. หาจุดวิกฤต: $f_x = 2x = 0 \implies x=0$, $f_y = -2y = 0 \implies y=0 \implies$ จุดวิกฤตคือ $(0,0)$</p>
+                        <p>2. หาอนุพันธ์อันดับสอง: $f_{xx} = 2, f_{yy} = -2, f_{xy} = 0$</p>
+                        <p>3. คำนวณ $D = (2)(-2) - 0 = -4$</p>
+                        <p>4. เนื่องจาก $D = -4 < 0$ ตามเกณฑ์ Second Derivative Test จึงสรุปได้ทันทีว่า $(0,0)$ คือ **จุดอานม้า (Saddle Point)**</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 13 -->
+                <div class="prob-card t3 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-md">ข้อที่ 13 | หมวดที่ 3: ค่าสุดขีดสัมบูรณ์บนเขตปิด</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Absolute Extrema</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงหาค่าสูงสุดสัมบูรณ์และค่าต่ำสุดสัมบูรณ์ของ $f(x,y) = 2 + 2x + 2y - x^2 - y^2$ บนเขตจานปิด $D = \{ (x,y) \mid x^2 + y^2 \le 9 \}$
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. **ภายในเขตเปิด:** $f_x = 2 - 2x = 0 \implies x=1$, $f_y = 2 - 2y = 0 \implies y=1$ จุดวิกฤตภายในคือ $(1,1)$ ค่า $f(1,1) = 2 + 2 + 2 - 1 - 1 = 4$</p>
+                        <p>2. **บนเส้นขอบ $x^2 + y^2 = 9$:** แทน $x^2+y^2=9$ ได้ $f = 2 + 2x + 2y - 9 = 2(x+y) - 7$</p>
+                        <p>3. ค่าสูงสุดของ $x+y$ บนวงกลม $x^2+y^2=9$ เกิดที่ $(3/\sqrt{2}, 3/\sqrt{2})$ ให้ค่า $f = 6\sqrt{2} - 7 \approx 1.48$</p>
+                        <p>4. ค่าต่ำสุดของ $x+y$ บนวงกลม เกิดที่ $(-3/\sqrt{2}, -3/\sqrt{2})$ ให้ค่า $f = -6\sqrt{2} - 7 \approx -15.48$</p>
+                        <p>5. **คำตอบสรุป:** ค่าสูงสุดสัมบูรณ์ $= 4$ ณ จุด $(1,1)$ และค่าต่ำสุดสัมบูรณ์ $= -6\sqrt{2}-7$ ณ จุด $(-3/\sqrt{2}, -3/\sqrt{2})$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 14 -->
+                <div class="prob-card t4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-md">ข้อที่ 14 | หมวดที่ 4: Optimization กล่องเปิดฝา</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Applied Optimization</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        ต้องการสร้างกล่องทรงสี่เหลี่ยมมุมฉากเปิดฝาบน ให้มีปริมาตร $V = 32,000$ ลบ.ซม. จงหามิติความกว้าง ยาว และสูง ที่ทำให้ใช้พื้นที่แผ่นวัสดุน้อยที่สุด
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. ให้ฐานเป็นสี่เหลี่ยม $x \times y$ และสูง $z \implies$ ปริมาตร $xyz = 32000 \implies z = \frac{32000}{xy}$</p>
+                        <p>2. สมการพื้นที่ผิว $A(x,y) = xy + 2xz + 2yz = xy + \frac{64000}{y} + \frac{64000}{x}$</p>
+                        <p>3. หาอนุพันธ์ย่อยเท่ากับ 0:</p>
+                        <p class="ml-4 font-mono">• $A_x = y - \frac{64000}{x^2} = 0 \implies y = \frac{64000}{x^2}$</p>
+                        <p class="ml-4 font-mono">• $A_y = x - \frac{64000}{y^2} = 0 \implies x = \frac{64000}{y^2}$</p>
+                        <p>4. แก้ระบบสมการได้ $x = y = 40$ ซม. และแทนค่าหา $z = \frac{32000}{1600} = 20$ ซม.</p>
+                        <p>5. **คำตอบสรุป:** ขนาดที่ประหยัดที่สุดคือ **กว้าง 40 ซม. ยาว 40 ซม. และสูง 20 ซม.**</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 15 -->
+                <div class="prob-card t4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-md">ข้อที่ 15 | หมวดที่ 4: อัตราสัมพัทธ์ ถังน้ำทรงกรวย</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Related Rates Conical</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        ถังน้ำรูปกรวยกลมตรงมียอดชี้ลง สูง $10$ เมตร รัศมีปากกรวย $5$ เมตร ถ้าน้ำไหลเข้าด้วยอัตราคงตัว $2$ ลบ.เมตร/นาที จงหาอัตราการเพิ่มขึ้นของระดับน้ำ ขณะที่น้ำสูง $4$ เมตร
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. จากสามเหลี่ยมคล้าย สัดส่วนรัศมีต่อความสูง $\frac{r}{h} = \frac{5}{10} = \frac{1}{2} \implies r = \frac{h}{2}$</p>
+                        <p>2. ปริมาตรน้ำ $V = \frac{1}{3}\pi r^2 h = \frac{1}{3}\pi \left(\frac{h}{2}\right)^2 h = \frac{\pi}{12} h^3$</p>
+                        <p>3. หาอนุพันธ์เทียบเวลา $t$: $\frac{dV}{dt} = \frac{\pi}{4} h^2 \frac{dh}{dt}$</p>
+                        <p>4. แทนค่า $\frac{dV}{dt} = 2$ และ $h = 4$:</p>
+                        <p class="ml-4 font-mono">$$2 = \frac{\pi}{4} (4)^2 \frac{dh}{dt} \implies 2 = 4\pi \frac{dh}{dt} \implies \frac{dh}{dt} = \frac{2}{4\pi} = \frac{1}{2\pi} \approx 0.159 \text{ เมตร/นาที}$$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 16 -->
+                <div class="prob-card t4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-md">ข้อที่ 16 | หมวดที่ 4: อัตราสัมพัทธ์ ระยะห่างเรือ</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Distance Rates</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        เรือ A แล่นไปทางทิศตะวันออกด้วยความเร็ว $30$ กม./ชม. เรือ B แล่นไปทางทิศเหนือด้วยความเร็ว $40$ กม./ชม. ขณะเวลา $t=0$ เรือ A อยู่ ณ จุดตัด และเรือ B อยู่ทางทิศใต้ห่างจากจุดตัด $50$ กม. จงหาอัตราการเปลี่ยนแปลงของระยะห่างหลังจากนั้น $1$ ชั่วโมง
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. เมื่อเวลาผ่านไป $t=1$ ชม.: เรือ A อยู่ทางตะวันออก $x = 30(1) = 30$ กม. ($\frac{dx}{dt} = 30$)</p>
+                        <p>2. เรือ B แล่นขึ้นเหนือได้ $40$ กม. ตำแหน่งจากจุดตัดเดิมคือ $y = -50 + 40 = -10$ กม. ($\frac{dy}{dt} = 40$)</p>
+                        <p>3. ระยะห่าง $s^2 = x^2 + y^2 = (30)^2 + (-10)^2 = 900 + 100 = 1000 \implies s = \sqrt{1000} = 10\sqrt{10}$</p>
+                        <p>4. หาอนุพันธ์ $2s\frac{ds}{dt} = 2x\frac{dx}{dt} + 2y\frac{dy}{dt} \implies s\frac{ds}{dt} = x\frac{dx}{dt} + y\frac{dy}{dt}$</p>
+                        <p class="ml-4 font-mono">$$(10\sqrt{10})\frac{ds}{dt} = (30)(30) + (-10)(40) = 900 - 400 = 500 \implies \frac{ds}{dt} = \frac{500}{10\sqrt{10}} = 5\sqrt{10} \approx 15.81 \text{ กม./ชม.}$$</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 17 -->
+                <div class="prob-card t4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-md">ข้อที่ 17 | หมวดที่ 4: Optimization ลดต้นทุนกระป๋อง</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Cost Minimization</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        ต้องการผลิตกระป๋องทรงกระบอกปิดฝาปริมาตร $V_0 = 54\pi$ ลบ.ซม. จงหารัศมี $r$ และความสูง $h$ ที่ใช้แผ่นโลหะผลิตน้อยที่สุด
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. ปริมาตร $V = \pi r^2 h = 54\pi \implies h = \frac{54}{r^2}$</p>
+                        <p>2. พื้นที่ผิวรวม $A = 2\pi r^2 + 2\pi r h = 2\pi r^2 + 2\pi r\left(\frac{54}{r^2}\right) = 2\pi r^2 + \frac{108\pi}{r}$</p>
+                        <p>3. หาอนุพันธ์ $\frac{dA}{dr} = 4\pi r - \frac{108\pi}{r^2} = 0 \implies 4\pi r^3 = 108\pi \implies r^3 = 27 \implies r = 3$ ซม.</p>
+                        <p>4. แทนค่า $h = \frac{54}{9} = 6$ ซม.</p>
+                        <p>5. **คำตอบสรุป:** ขนาดประหยัดที่สุดคือ **รัศมี $r = 3$ ซม. และความสูง $h = 6$ ซม.** ($h = 2r$)</p>
+                    </div>
+                </div>
+
+                <!-- PROBLEM 18 -->
+                <div class="prob-card t4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-md">ข้อที่ 18 | หมวดที่ 4: ระยะทางใกล้สุดถึงจุดกำเนิด</span>
+                        <span class="text-xs text-slate-400 font-mono">Exam Tag: Min Distance 3D</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                        จงหาจุดบนระนาบ $x + 2y + 3z = 14$ ที่อยู่ใกล้จุดกำเนิด $(0,0,0)$ มากที่สุด
+                    </h3>
+                    <div class="solution-box p-4 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-emerald-900 text-sm"><i class="fas fa-check-circle mr-1"></i> เฉลยและวิธีทำอย่างละเอียด:</div>
+                        <p>1. ระยะทางกำลังสอง $d^2 = f(x,y,z) = x^2 + y^2 + z^2$ โดย $x = 14 - 2y - 3z$</p>
+                        <p>2. แทน $x$ ใน $f$: $g(y,z) = (14 - 2y - 3z)^2 + y^2 + z^2$</p>
+                        <p>3. หาอนุพันธ์ย่อย $g_y = 2(14-2y-3z)(-2) + 2y = 0 \implies 10y + 12z = 56$</p>
+                        <p>4. หาอนุพันธ์ย่อย $g_z = 2(14-2y-3z)(-3) + 2z = 0 \implies 12y + 20z = 84$</p>
+                        <p>5. แก้ระบบสมการได้ $y = 2, z = 3$ และแทนค่า $x = 14 - 4 - 9 = 1$</p>
+                        <p>6. **คำตอบสรุป:** จุดที่อยู่ใกล้จุดกำเนิดมากที่สุดคือ **$(1, 2, 3)$**</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VIEW 4: INTERACTIVE CANVAS SIMULATORS -->
+        <div id="view-simulators" class="hidden space-y-8">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                    <i class="fas fa-chart-line text-indigo-600 mr-2.5"></i> เครื่องมือจำลองกราฟและแคลคูลัสเชิงปฏิสัมพันธ์
+                </h2>
+                <p class="text-xs text-slate-500">ทดลองปรับเปลี่ยนพารามิเตอร์เพื่อสังเกตพฤติกรรมของกราฟและค่าคำนวณสด</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Visualizer 1 -->
+                <div class="glass-card p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base mb-2">1. เครื่องมือพลอตเส้นโค้งระดับ (Level Curves)</h3>
+                        <p class="text-xs text-slate-500 mb-3">แสดงภาคตัดระดับความสูง $z=c$ สำหรับทรงพาราโบโลอยด์ อานม้า และระนาบ</p>
+                        <div class="grid grid-cols-3 gap-2 mb-3">
+                            <button onclick="updateSim1Chart('paraboloid')" class="px-2 py-1.5 bg-indigo-600 text-white rounded text-xs font-semibold">พาราโบโลอยด์</button>
+                            <button onclick="updateSim1Chart('saddle')" class="px-2 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded text-xs font-semibold">อานม้า</button>
+                            <button onclick="updateSim1Chart('plane')" class="px-2 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded text-xs font-semibold">ระนาบ</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sim1Chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Visualizer 2 -->
+                <div class="glass-card p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base mb-2">2. แบบจำลองความคลาดเคลื่อน $\Delta z$ vs $dz$</h3>
+                        <p class="text-xs text-slate-500 mb-3">เปรียบเทียบค่าเปลี่ยนแปลงจริงกับค่าประมาณผลต่างรวมเมื่อ $dx$ เพิ่มขึ้น</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sim2Chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Visualizer 3 -->
+                <div class="glass-card p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base mb-2">3. เครื่องมือวิเคราะห์ภาคตัดจุดวิกฤต (Hessian Visualizer)</h3>
+                        <p class="text-xs text-slate-500 mb-3">คำนวณ $D$ และแสดงความโค้งตามแนวแกน X และ Y</p>
+                        <div class="grid grid-cols-3 gap-2 mb-3 bg-slate-50 p-2 rounded border text-xs">
+                            <input type="number" id="sim3Fxx" value="2" step="1" onchange="updateSim3Chart()" class="p-1 border rounded text-center" placeholder="fxx">
+                            <input type="number" id="sim3Fyy" value="2" step="1" onchange="updateSim3Chart()" class="p-1 border rounded text-center" placeholder="fyy">
+                            <input type="number" id="sim3Fxy" value="0" step="1" onchange="updateSim3Chart()" class="p-1 border rounded text-center" placeholder="fxy">
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sim3Chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Visualizer 4 -->
+                <div class="glass-card p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base mb-2">4. จำลองอัตราการเปลี่ยนแปลงระดับน้ำในถังทรงกรวย</h3>
+                        <p class="text-xs text-slate-500 mb-3">ความสัมพันธ์ของอัตรา $dh/dt$ กับความสูงน้ำ $h$</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sim4Chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-base font-bold text-slate-800 flex items-center">
+                    <i class="fas fa-search text-indigo-600 mr-2"></i> ค้นหาสูตร นิยาม หรือโจทย์ด่วน
+                </h3>
+                <button onclick="toggleSearchModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <input type="text" id="searchInput" onkeyup="globalSearch()" placeholder="พิมพ์คำค้น เช่น 'อานม้า', 'ลูกโซ่', 'dz', 'กรวย'..." class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+            
+            <div id="searchResults" class="max-h-60 overflow-y-auto space-y-2 text-xs">
+                <p class="text-slate-400 text-center py-4">เริ่มต้นพิมพ์เพื่อค้นหาเนื้อหาหรือโจทย์ที่ต้องการ</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+                <p class="font-bold text-slate-200">Multivariable Calculus Interactive Hub</p>
+                <p class="text-slate-500 mt-0.5">สื่อการเรียนการสอนและรวบรวมโจทย์สอบสำหรับวิชาแคลคูลัสหลายตัวแปรและการประยุกต์อนุพันธ์</p>
+            </div>
+            <p class="text-slate-500">&copy; 2026 Academic Outcome-Based Education</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Chart Instances Global Object
+        let charts = {};
+
+        // MAIN VIEW NAVIGATION SWITCHER
+        function switchMainView(viewName) {
+            ['overview', 'deepdive', 'problems', 'simulators'].forEach(v => {
+                const el = document.getElementById('view-' + v);
+                const btn = document.getElementById('nav-btn-' + v);
+                if (v === viewName) {
+                    el.classList.remove('hidden');
+                    if(btn) {
+                        btn.className = "px-3 py-2 rounded-lg bg-indigo-800 text-white font-semibold transition";
+                    }
+                } else {
+                    el.classList.add('hidden');
+                    if(btn) {
+                        btn.className = "px-3 py-2 rounded-lg hover:bg-indigo-800 text-indigo-200 hover:text-white transition";
+                    }
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (window.MathJax) MathJax.typesetPromise();
+        }
+
+        // TOPIC DEEP-DIVE SWITCHER
+        function openTopicDeepDive(topicId) {
+            switchMainView('deepdive');
+            ['topic1', 'topic2', 'topic3', 'topic4'].forEach(t => {
+                const content = document.getElementById('dd-' + t);
+                const btn = document.getElementById('sub-btn-' + t);
+                if (t === topicId) {
+                    content.classList.remove('hidden');
+                    btn.className = "px-3 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow-sm";
+                } else {
+                    content.classList.add('hidden');
+                    btn.className = "px-3 py-2 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200";
+                }
+            });
+            if (window.MathJax) MathJax.typesetPromise();
+        }
+
+        // PROBLEM BANK FILTER LOGIC
+        function filterProblems(tag) {
+            const cards = document.querySelectorAll('.prob-card');
+            cards.forEach(card => {
+                if (tag === 'all' || card.classList.contains(tag)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const btns = document.querySelectorAll('.prob-btn');
+            btns.forEach(b => {
+                b.className = "prob-btn px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200";
+            });
+            event.target.className = "prob-btn px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-sm";
+        }
+
+        // OVERVIEW CALCULATORS
+        function calcOverviewLinearization() {
+            const dx = parseFloat(document.getElementById('overviewDx').value) || 0.1;
+            const dy = parseFloat(document.getElementById('overviewDy').value) || 0.1;
+
+            const x0 = 2, y0 = 3;
+            const z0 = 13;
+            const zNew = (x0 + dx)*(x0 + dx) + (y0 + dy)*(y0 + dy);
+            const deltaZ = zNew - z0;
+            const dz = (2*x0)*dx + (2*y0)*dy;
+            const error = Math.abs((deltaZ - dz) / deltaZ) * 100;
+
+            document.getElementById('overviewLinearResult').innerHTML = `
+                <div>ค่าเปลี่ยนแปลงจริง $\\Delta z = ${deltaZ.toFixed(4)}$</div>
+                <div>ค่าประมาณผลต่างรวม $dz = ${dz.toFixed(4)}$</div>
+                <div class="font-bold text-emerald-800">ความคลาดเคลื่อนสะสม = ${error.toFixed(2)}%</div>
+            `;
+            if (window.MathJax) MathJax.typesetPromise();
+        }
+
+        // CHARTS INITIALIZATION
+        function initAllCharts() {
+            // Overview Level Chart
+            const ctx0 = document.getElementById('overviewLevelChart').getContext('2d');
+            charts.overviewLevel = new Chart(ctx0, {
+                type: 'line',
+                data: getParaboloidData(),
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Simulator 1 Chart
+            const ctx1 = document.getElementById('sim1Chart').getContext('2d');
+            charts.sim1 = new Chart(ctx1, {
+                type: 'line',
+                data: getParaboloidData(),
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Simulator 2 Chart
+            const ctx2 = document.getElementById('sim2Chart').getContext('2d');
+            const steps = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3];
+            charts.sim2 = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: steps.map(s => s.toString()),
+                    datasets: [
+                        { label: 'ค่าจริง Delta Z', data: steps.map(s => ((2+s)**2 + (3+s)**2 - 13)), borderColor: '#4f46e5', borderWidth: 2 },
+                        { label: 'ค่าประมาณ dz', data: steps.map(s => 4*s + 6*s), borderColor: '#10b981', borderWidth: 2, borderDash: [4,4] }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Simulator 3 Chart
+            const ctx3 = document.getElementById('sim3Chart').getContext('2d');
+            charts.sim3 = new Chart(ctx3, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            updateSim3Chart();
+
+            // Simulator 4 Chart
+            const ctx4 = document.getElementById('sim4Chart').getContext('2d');
+            const heights = [1, 2, 3, 4, 5];
+            charts.sim4 = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: heights.map(h => h + 'm'),
+                    datasets: [{
+                        label: 'dh/dt (m/min)',
+                        data: heights.map(h => 2 / (Math.PI * 0.25 * h * h)),
+                        borderColor: '#f43f5e',
+                        backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function getParaboloidData() {
+            const labels = [-3, -2, -1, 0, 1, 2, 3];
+            return {
+                labels: labels.map(l => l.toString()),
+                datasets: [
+                    { label: 'z = x^2 (y=0)', data: labels.map(x => x*x), borderColor: '#4f46e5', borderWidth: 2 },
+                    { label: 'z = x^2 + 1 (y=1)', data: labels.map(x => x*x + 1), borderColor: '#06b6d4', borderWidth: 1.5, borderDash: [4,4] }
+                ]
+            };
+        }
+
+        function updateOverviewLevelChart(type) {
+            updateSim1Chart(type);
+        }
+
+        function updateSim1Chart(type) {
+            const labels = [-3, -2, -1, 0, 1, 2, 3];
+            let datasets = [];
+            if(type === 'paraboloid') {
+                datasets = getParaboloidData().datasets;
+            } else if(type === 'saddle') {
+                datasets = [
+                    { label: 'ตัดแนว X: z = x^2 (โค้งขึ้น)', data: labels.map(x => x*x), borderColor: '#10b981', borderWidth: 2 },
+                    { label: 'ตัดแนว Y: z = -y^2 (โค้งลง)', data: labels.map(y => -y*y), borderColor: '#f43f5e', borderWidth: 2 }
+                ];
+            } else if(type === 'plane') {
+                datasets = [
+                    { label: 'ระนาบ z = 2x', data: labels.map(x => 2*x), borderColor: '#8b5cf6', borderWidth: 2 }
+                ];
+            }
+            charts.sim1.data.datasets = datasets;
+            charts.sim1.update();
+            charts.overviewLevel.data.datasets = datasets;
+            charts.overviewLevel.update();
+        }
+
+        function updateSim3Chart() {
+            const fxx = parseFloat(document.getElementById('sim3Fxx').value) || 2;
+            const fyy = parseFloat(document.getElementById('sim3Fyy').value) || 2;
+            const steps = [-2, -1, 0, 1, 2];
+            charts.sim3.data.labels = steps.map(s => s.toString());
+            charts.sim3.data.datasets = [
+                { label: 'ภาคตัดแกน X (fxx)', data: steps.map(x => 0.5 * fxx * x * x), borderColor: '#4f46e5', borderWidth: 2 },
+                { label: 'ภาคตัดแกน Y (fyy)', data: steps.map(y => 0.5 * fyy * y * y), borderColor: '#f43f5e', borderWidth: 2, borderDash: [3,3] }
+            ];
+            charts.sim3.update();
+        }
+
+        // SEARCH MODAL & GLOBAL SEARCH LOGIC
+        function toggleSearchModal() {
+            document.getElementById('searchModal').classList.toggle('hidden');
+        }
+
+        function globalSearch() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            const res = document.getElementById('searchResults');
+            res.innerHTML = "";
+
+            if (!q) {
+                res.innerHTML = `<p class="text-slate-400 text-center py-4">เริ่มต้นพิมพ์เพื่อค้นหาเนื้อหาหรือโจทย์ที่ต้องการ</p>`;
+                return;
+            }
+
+            let matches = 0;
+            const probCards = document.querySelectorAll('.prob-card');
+            probCards.forEach((card, idx) => {
+                if (card.innerText.toLowerCase().includes(q)) {
+                    matches++;
+                    const item = document.createElement('div');
+                    item.className = "p-3 bg-slate-50 hover:bg-indigo-50 rounded-lg cursor-pointer border transition";
+                    item.innerHTML = `<div class="font-bold text-indigo-900">โจทย์ข้อสอบที่ ${idx+1}</div><div class="text-[11px] text-slate-600 truncate">${card.querySelector('h3').innerText}</div>`;
+                    item.onclick = () => {
+                        toggleSearchModal();
+                        switchMainView('problems');
+                        card.scrollIntoView({ behavior: 'smooth' });
+                    };
+                    res.appendChild(item);
+                }
+            });
+
+            if (matches === 0) {
+                res.innerHTML = `<p class="text-slate-400 text-center py-4">ไม่พบโจทย์หรือสูตรที่ตรงกับคำค้นหา</p>`;
+            }
+        }
+
+        // Initialize App on Load
+        window.addEventListener('load', () => {
+            initAllCharts();
+        });
+    </script>
+</body>
+</html>
